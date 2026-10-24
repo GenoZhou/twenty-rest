@@ -1,6 +1,6 @@
 import Foundation
 
-struct RestCycleSettings {
+nonisolated struct RestCycleSettings {
     private let defaults: UserDefaults
 
     private enum Key {

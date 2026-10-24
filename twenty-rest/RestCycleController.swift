@@ -15,10 +15,12 @@ final class RestCycleController {
     /// Stored so MenuBarExtra's label can observe second-by-second changes.
     private(set) var statusTitle: String = ""
 
-    init(settings: RestCycleSettings = RestCycleSettings()) {
+    /// - Parameter enablesRuntime: Pass `false` in unit tests to skip Timer and lock observers.
+    init(settings: RestCycleSettings = RestCycleSettings(), enablesRuntime: Bool = true) {
         self.settings = settings
         self.cycle = RestCycle(configuration: settings.configuration)
         self.statusTitle = cycle.statusTitle
+        guard enablesRuntime else { return }
         startTicker()
         startSessionObservers()
     }
@@ -55,17 +57,17 @@ final class RestCycleController {
 
     func skip() {
         mutate { $0.skip() }
-        isRestPanelPresented = false
+        dismissRestPanel()
     }
 
     func snooze() {
         mutate { $0.snooze() }
-        isRestPanelPresented = false
+        dismissRestPanel()
     }
 
     func markReturn() {
         mutate { $0.markReturn() }
-        isRestPanelPresented = false
+        dismissRestPanel()
     }
 
     func pause() {
@@ -86,6 +88,30 @@ final class RestCycleController {
         sessionObservers = []
     }
 
+    /// Advances the cycle clock (tests and future debug tooling).
+    func advanceTime(by duration: Duration) {
+        mutate { $0.tick(by: duration) }
+        presentRestPanelIfNeeded()
+    }
+
+    /// Test seam for lock (mirrors `handleLocked` without recording a wall clock start).
+    func beginSessionLockForTesting() {
+        mutate { $0.handleSessionLocked() }
+    }
+
+    /// Applies unlock wall-clock catch-up (same path as real unlock / wake).
+    func applySessionUnlock(wallTimeElapsed: Duration) {
+        mutate { $0.handleSessionUnlocked(wallTimeElapsedWhileLocked: wallTimeElapsed) }
+        if !cycle.isInRest {
+            dismissRestPanel()
+        }
+        presentRestPanelIfNeeded()
+    }
+
+    private func dismissRestPanel() {
+        isRestPanelPresented = false
+    }
+
     private func mutate(_ body: (inout RestCycle) -> Void) {
         var copy = cycle
         body(&copy)
@@ -100,8 +126,9 @@ final class RestCycleController {
     private func startTicker() {
         timer?.invalidate()
         let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
+            guard let self else { return }
             Task { @MainActor in
-                self?.tickOneSecond()
+                self.tickOneSecond()
             }
         }
         RunLoop.main.add(timer, forMode: .common)
@@ -109,8 +136,7 @@ final class RestCycleController {
     }
 
     private func tickOneSecond() {
-        mutate { $0.tick(by: .seconds(1)) }
-        presentRestPanelIfNeeded()
+        advanceTime(by: .seconds(1))
     }
 
     private func presentRestPanelIfNeeded() {
@@ -127,14 +153,16 @@ final class RestCycleController {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.handleLocked() }
+            guard let self else { return }
+            Task { @MainActor in self.handleLocked() }
         }
         let unlocked = distributed.addObserver(
             forName: Notification.Name("com.apple.screenIsUnlocked"),
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.handleUnlocked() }
+            guard let self else { return }
+            Task { @MainActor in self.handleUnlocked() }
         }
 
         let workspace = NSWorkspace.shared.notificationCenter
@@ -143,14 +171,16 @@ final class RestCycleController {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.handleLocked() }
+            guard let self else { return }
+            Task { @MainActor in self.handleLocked() }
         }
         let didWake = workspace.addObserver(
             forName: NSWorkspace.didWakeNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.handleUnlocked() }
+            guard let self else { return }
+            Task { @MainActor in self.handleUnlocked() }
         }
 
         sessionObservers = [locked, unlocked, willSleep, didWake]
@@ -172,11 +202,6 @@ final class RestCycleController {
         } else {
             elapsed = .zero
         }
-        mutate { $0.handleSessionUnlocked(wallTimeElapsedWhileLocked: elapsed) }
-        // Auto-Return must dismiss an already-open Rest panel (manual Return does this too).
-        if !cycle.isInRest {
-            isRestPanelPresented = false
-        }
-        presentRestPanelIfNeeded()
+        applySessionUnlock(wallTimeElapsed: elapsed)
     }
 }

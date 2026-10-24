@@ -1,19 +1,19 @@
 import Foundation
 
-struct RestCycleConfiguration: Equatable, Sendable {
+nonisolated struct RestCycleConfiguration: Equatable, Sendable {
     var workInterval: Duration = .seconds(20 * 60)
     var restMinimum: Duration = .seconds(20)
     var snoozeDuration: Duration = .seconds(5 * 60)
 }
 
-enum RestCyclePhase: Equatable, Sendable {
+nonisolated enum RestCyclePhase: Equatable, Sendable {
     case workInterval
     case restMinimum
     case restAwaitingReturn
     case paused
 }
 
-struct RestCycle: Equatable, Sendable {
+nonisolated struct RestCycle: Equatable, Sendable {
     var configuration: RestCycleConfiguration
     private(set) var phase: RestCyclePhase
     private(set) var remaining: Duration
