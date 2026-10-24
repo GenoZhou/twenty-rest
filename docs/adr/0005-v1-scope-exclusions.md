@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (amended by [ADR 0007](0007-unified-lock-reset-and-simpler-rest-exits.md))
+Accepted (amended by [ADR 0007](0007-unified-lock-reset-and-simpler-rest-exits.md); idle and Vision made standing by [ADR 0008](0008-no-idle-as-screen-use.md) / [ADR 0009](0009-no-vision-as-screen-use.md))
 
 ## Context
 
@@ -10,7 +10,7 @@ The product vision includes later signals (Vision blink detection, keyboard/mous
 
 ## Decision
 
-v1 excludes: camera / Vision blink detection; keyboard/mouse idle detection; system notifications for Rest; Live Activities; accounts, sync, and multi-user features.
+v1 excludes: camera / Vision blink detection (standing: ADR 0009); keyboard/mouse idle detection (standing: ADR 0008); system notifications for Rest; Live Activities; accounts, sync, and multi-user features.
 
 v1 includes: menu-bar-only pacing; configurable Work Interval / Rest minimum (defaults 20 min / 20 s); Rest panel with Return and optional system lock; lock/sleep freeze of Work Interval and Reset when lock covers the Rest minimum (ADR 0007); launch-at-login (default on); Chinese UI; silent by default.
 
