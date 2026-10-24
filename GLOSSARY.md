@@ -13,8 +13,8 @@ The distant-gaze pause after a Work Interval. The cue is to look about 20 feet /
 _Avoid_: Break, pause, alarm (too generic or implies audio-only)
 
 **Return**:
-Ending a Rest after its minimum has elapsed and starting the next Work Interval. In v1 this is always a manual confirmation.
-_Avoid_: Resume, dismiss, unlock (ambiguous with system lock)
+Ending a Rest after its minimum has elapsed and starting the next Work Interval. Usually a manual confirmation; also happens automatically when unlocking after a lock/sleep that already covered the remaining Rest minimum.
+_Avoid_: Resume, dismiss (unlock alone is not always a Return)
 
 **Rest Cycle**:
 One Work Interval followed by one Rest. The app’s core rhythm is repeating Rest Cycles.

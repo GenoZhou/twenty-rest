@@ -12,15 +12,17 @@ final class RestCycleController {
     private var sessionObservers: [NSObjectProtocol] = []
 
     var isRestPanelPresented: Bool = false
+    /// Stored so MenuBarExtra's label can observe second-by-second changes.
+    private(set) var statusTitle: String = ""
 
     init(settings: RestCycleSettings = RestCycleSettings()) {
         self.settings = settings
         self.cycle = RestCycle(configuration: settings.configuration)
+        self.statusTitle = cycle.statusTitle
         startTicker()
         startSessionObservers()
     }
 
-    var statusTitle: String { cycle.statusTitle }
     var phase: RestCyclePhase { cycle.phase }
     var canReturn: Bool { cycle.canReturn }
     var isInRest: Bool { cycle.isInRest }
@@ -88,6 +90,7 @@ final class RestCycleController {
         var copy = cycle
         body(&copy)
         cycle = copy
+        statusTitle = copy.statusTitle
     }
 
     private func updateStoredConfiguration() {
@@ -161,18 +164,18 @@ final class RestCycleController {
     }
 
     private func handleUnlocked() {
-        let wasInRest = cycle.isInRest
-        let elapsed: TimeInterval
+        let elapsed: Duration
         if let started = lockStartedAt {
-            elapsed = Date().timeIntervalSince(started)
+            let seconds = max(0, Int(Date().timeIntervalSince(started)))
+            elapsed = .seconds(seconds)
             lockStartedAt = nil
         } else {
-            elapsed = 0
+            elapsed = .zero
         }
-        // Clear lock first so Rest wall-clock catch-up ticks are accepted.
-        mutate { $0.handleSessionUnlocked() }
-        if wasInRest, elapsed > 0 {
-            mutate { $0.tick(by: .seconds(Int(elapsed))) }
+        mutate { $0.handleSessionUnlocked(wallTimeElapsedWhileLocked: elapsed) }
+        // Auto-Return must dismiss an already-open Rest panel (manual Return does this too).
+        if !cycle.isInRest {
+            isRestPanelPresented = false
         }
         presentRestPanelIfNeeded()
     }

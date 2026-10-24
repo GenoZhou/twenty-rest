@@ -100,15 +100,24 @@ struct RestCycle: Equatable, Sendable {
         remainingBeforePause = nil
     }
 
-    /// Work Interval stops accumulating while locked; Rest keeps wall-clock progress via `tick`.
+    /// Work Interval stops accumulating while locked; Rest wall-clock is applied on unlock.
     mutating func handleSessionLocked() {
         isSessionLocked = true
     }
 
-    /// On unlock during Rest, re-present the panel. Elapsed Rest time is applied by the caller via `tick`.
-    mutating func handleSessionUnlocked() {
+    /// Clears the lock. If still in Rest, applies wall time away; when that satisfies the
+    /// Rest minimum, auto-Returns (no panel). Otherwise re-presents the Rest panel.
+    mutating func handleSessionUnlocked(wallTimeElapsedWhileLocked: Duration = .zero) {
         isSessionLocked = false
-        if isInRest {
+        guard isInRest else { return }
+
+        if wallTimeElapsedWhileLocked > .zero {
+            tick(by: wallTimeElapsedWhileLocked)
+        }
+
+        if canReturn {
+            markReturn()
+        } else {
             shouldPresentRestPanel = true
         }
     }

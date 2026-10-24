@@ -12,8 +12,13 @@ struct TwentyRestApp: App {
         MenuBarExtra {
             MenuBarView(controller: controller)
         } label: {
-            Label(controller.statusTitle, systemImage: "eye")
-                .background(RestPanelPresenter(controller: controller))
+            // Label(title, systemImage:) often renders icon-only in the menu bar.
+            HStack(spacing: 4) {
+                Image(systemName: "eye")
+                Text(controller.statusTitle)
+                    .monospacedDigit()
+            }
+            .background(RestPanelPresenter(controller: controller))
         }
         .menuBarExtraStyle(.window)
 
@@ -22,10 +27,6 @@ struct TwentyRestApp: App {
         }
         .windowResizability(.contentSize)
         .defaultLaunchBehavior(.suppressed)
-
-        Settings {
-            SettingsView(controller: controller)
-        }
     }
 
     private static func registerLoginItemOnFirstLaunchIfNeeded() {

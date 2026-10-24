@@ -155,8 +155,8 @@ struct RestCycleTests {
         #expect(cycle.remaining == .seconds(45))
     }
 
-    @Test("While locked, ticker does not advance Rest; unlock applies wall time and re-presents panel")
-    func lockDuringRestDefersProgressUntilUnlock() {
+    @Test("While locked, ticker does not advance Rest")
+    func tickerIgnoredWhileLockedDuringRest() {
         var cycle = RestCycle(
             configuration: RestCycleConfiguration(
                 workInterval: .seconds(60),
@@ -171,14 +171,45 @@ struct RestCycleTests {
         cycle.tick(by: .seconds(20))
         #expect(cycle.phase == .restMinimum)
         #expect(cycle.remaining == .seconds(20))
+    }
 
-        cycle.tick(by: .seconds(20)) // still locked — ignored
-        cycle.handleSessionUnlocked()
-        // Controller applies wall elapsed via tick after unlock; simulate that here:
-        cycle.tick(by: .seconds(20))
+    @Test("Unlock after lock covering Rest minimum auto-Returns without panel")
+    func unlockAfterSufficientLockAutoReturns() {
+        var cycle = RestCycle(
+            configuration: RestCycleConfiguration(
+                workInterval: .seconds(60),
+                restMinimum: .seconds(20),
+                snoozeDuration: .seconds(300)
+            )
+        )
+        cycle.tick(by: .seconds(60))
+        cycle.acknowledgeRestPanelPresentation()
+        cycle.handleSessionLocked()
 
-        #expect(cycle.phase == .restAwaitingReturn)
-        #expect(cycle.canReturn == true)
+        cycle.handleSessionUnlocked(wallTimeElapsedWhileLocked: .seconds(20))
+
+        #expect(cycle.phase == .workInterval)
+        #expect(cycle.remaining == .seconds(60))
+        #expect(cycle.shouldPresentRestPanel == false)
+    }
+
+    @Test("Unlock before Rest minimum is met re-presents the panel")
+    func unlockBeforeRestMinimumPresentsPanel() {
+        var cycle = RestCycle(
+            configuration: RestCycleConfiguration(
+                workInterval: .seconds(60),
+                restMinimum: .seconds(20),
+                snoozeDuration: .seconds(300)
+            )
+        )
+        cycle.tick(by: .seconds(60))
+        cycle.acknowledgeRestPanelPresentation()
+        cycle.handleSessionLocked()
+
+        cycle.handleSessionUnlocked(wallTimeElapsedWhileLocked: .seconds(5))
+
+        #expect(cycle.phase == .restMinimum)
+        #expect(cycle.remaining == .seconds(15))
         #expect(cycle.shouldPresentRestPanel == true)
     }
 

@@ -1,23 +1,26 @@
-# ADR 0006: Rest survives lock/sleep; re-present panel on wake
+# ADR 0006: Rest survives lock/sleep; auto-Return when lock covers the minimum
 
 ## Status
 
-Accepted
+Accepted (amended)
 
 ## Context
 
 Users may lock or sleep the Mac as part of resting (stand up, look away). Work Interval already pauses on lock/sleep, so a Rest generally will not become newly due while locked. The important case is a Rest that was already due or in progress when lock/sleep happens.
 
-Auto-Return on wake would start the next Work Interval before the user has confirmed they are back at the screen. System notifications for this were rejected in v1.
+Requiring a manual Return after a long lock feels like busywork when the lock itself already exceeded the Rest minimum. Auto-Return on every unlock would be wrong when the user unlocks before the minimum is met.
 
 ## Decision
 
 - Lock/sleep does not cancel an in-progress Rest.
-- Rest minimum duration uses wall-clock time (time asleep counts toward the minimum).
-- On unlock/wake, if still in Rest, automatically re-present the Rest panel.
-- Do not auto-Return and do not notify; the user still Returns, Skips, or Snoozes.
+- Rest minimum duration uses wall-clock time applied once on unlock (the 1s ticker does not advance while locked).
+- On unlock/wake during Rest:
+  - If wall time away satisfies the Rest minimum (Return would be allowed) → **auto-Return** into the next Work Interval; do not present the Rest panel.
+  - Otherwise → keep Rest, automatically re-present the Rest panel; user still Returns, Skips, or Snoozes.
+- Do not use system notifications.
 
 ## Consequences
 
-- Lock-to-rest is a first-class path: sleep five minutes, wake, panel shows Return-ready.
-- Rest panel presentation must be re-triggerable from session unlock/wake observers, not only from the original due transition.
+- Lock-away longer than the remaining Rest minimum is a first-class “I rested by leaving” path.
+- Brief unlocks before the minimum still show the panel.
+- Work Interval lock/pause behavior is unchanged (ADR 0002).

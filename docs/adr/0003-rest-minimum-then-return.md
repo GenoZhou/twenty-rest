@@ -11,10 +11,10 @@ Classic 20-20-20 asks for at least 20 seconds of distant gaze, but people often 
 ## Decision
 
 - Treat the Rest duration as a **minimum** (default 20 seconds), not an exact slot.
-- After the minimum elapses, stay in Rest until the user **Returns** (manual confirmation in v1).
+- After the minimum elapses, stay in Rest until the user **Returns** (manual confirmation), unless unlock after lock/sleep already covered the remaining minimum (see ADR 0006).
 - Do not use keyboard/mouse activity to end Rest in v1.
 - Skip still ends Rest immediately and starts the next Work Interval.
-- Do not send system notifications for Rest due; the auto-presented Rest panel is the interrupt.
+- Do not send system notifications for Rest due; the auto-presented Rest panel is the interrupt when Return is still required.
 
 ## Consequences
 
