@@ -3,24 +3,21 @@ import Foundation
 nonisolated struct RestCycleConfiguration: Equatable, Sendable {
     var workInterval: Duration = .seconds(20 * 60)
     var restMinimum: Duration = .seconds(20)
-    var snoozeDuration: Duration = .seconds(5 * 60)
 }
 
 nonisolated enum RestCyclePhase: Equatable, Sendable {
     case workInterval
     case restMinimum
     case restAwaitingReturn
-    case paused
 }
 
 nonisolated struct RestCycle: Equatable, Sendable {
     var configuration: RestCycleConfiguration
     private(set) var phase: RestCyclePhase
+    /// Work Interval / Rest minimum: time left. Rest awaiting Return: overtime past the minimum.
     private(set) var remaining: Duration
     /// True when the Rest panel should be (re)presented.
     private(set) var shouldPresentRestPanel: Bool
-    private var phaseBeforePause: RestCyclePhase?
-    private var remainingBeforePause: Duration?
     private var isSessionLocked: Bool
 
     init(configuration: RestCycleConfiguration = RestCycleConfiguration()) {
@@ -28,8 +25,6 @@ nonisolated struct RestCycle: Equatable, Sendable {
         self.phase = .workInterval
         self.remaining = configuration.workInterval
         self.shouldPresentRestPanel = false
-        self.phaseBeforePause = nil
-        self.remainingBeforePause = nil
         self.isSessionLocked = false
     }
 
@@ -58,26 +53,16 @@ nonisolated struct RestCycle: Equatable, Sendable {
                 enterRest()
             }
         case .restMinimum:
-            remaining -= elapsed
-            if remaining <= .zero {
-                remaining = .zero
+            if elapsed >= remaining {
+                let overtime = elapsed - remaining
                 phase = .restAwaitingReturn
+                remaining = overtime
+            } else {
+                remaining -= elapsed
             }
-        case .restAwaitingReturn, .paused:
-            break
+        case .restAwaitingReturn:
+            remaining += elapsed
         }
-    }
-
-    mutating func skip() {
-        guard isInRest else { return }
-        beginWorkInterval()
-    }
-
-    mutating func snooze() {
-        guard isInRest else { return }
-        phase = .workInterval
-        remaining = configuration.snoozeDuration
-        shouldPresentRestPanel = false
     }
 
     mutating func markReturn() {
@@ -85,53 +70,35 @@ nonisolated struct RestCycle: Equatable, Sendable {
         beginWorkInterval()
     }
 
-    mutating func pause() {
-        guard phase == .workInterval else { return }
-        phaseBeforePause = phase
-        remainingBeforePause = remaining
-        phase = .paused
-    }
-
-    mutating func resume() {
-        guard phase == .paused else { return }
-        phase = phaseBeforePause ?? .workInterval
-        remaining = remainingBeforePause ?? remaining
-        phaseBeforePause = nil
-        remainingBeforePause = nil
-    }
-
     /// Work Interval stops accumulating while locked; Rest wall-clock is applied on unlock.
     mutating func handleSessionLocked() {
         isSessionLocked = true
     }
 
-    /// Clears the lock. If still in Rest, applies wall time away; when that satisfies the
-    /// Rest minimum, auto-Returns (no panel). Otherwise re-presents the Rest panel.
+    /// Clears the lock. Wall time ≥ Rest minimum → Reset (fresh Work Interval).
+    /// Shorter locks: Work Interval resumes; Rest credits wall time and re-presents the panel.
     mutating func handleSessionUnlocked(wallTimeElapsedWhileLocked: Duration = .zero) {
         isSessionLocked = false
+
+        if wallTimeElapsedWhileLocked >= configuration.restMinimum {
+            beginWorkInterval()
+            return
+        }
+
         guard isInRest else { return }
 
         if wallTimeElapsedWhileLocked > .zero {
             tick(by: wallTimeElapsedWhileLocked)
         }
-
-        if canReturn {
-            markReturn()
-        } else {
-            shouldPresentRestPanel = true
-        }
+        shouldPresentRestPanel = true
     }
 
     var statusTitle: String {
         switch phase {
-        case .workInterval:
-            return Self.formatCountdown(remaining)
-        case .restMinimum:
+        case .workInterval, .restMinimum:
             return Self.formatCountdown(remaining)
         case .restAwaitingReturn:
-            return "休息好了"
-        case .paused:
-            return "⏸ \(Self.formatCountdown(remaining))"
+            return "超过 \(Self.formatCountdown(remaining))"
         }
     }
 

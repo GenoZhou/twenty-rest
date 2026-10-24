@@ -28,7 +28,6 @@ final class RestCycleController {
     var phase: RestCyclePhase { cycle.phase }
     var canReturn: Bool { cycle.canReturn }
     var isInRest: Bool { cycle.isInRest }
-    var isPaused: Bool { cycle.phase == .paused }
     var remaining: Duration { cycle.remaining }
 
     var workIntervalMinutes: Int {
@@ -47,35 +46,14 @@ final class RestCycleController {
         }
     }
 
-    var snoozeMinutes: Int {
-        get { max(1, settings.snoozeSeconds / 60) }
-        set {
-            settings.snoozeSeconds = max(1, newValue) * 60
-            updateStoredConfiguration()
-        }
-    }
-
-    func skip() {
-        mutate { $0.skip() }
-        dismissRestPanel()
-    }
-
-    func snooze() {
-        mutate { $0.snooze() }
-        dismissRestPanel()
-    }
-
     func markReturn() {
         mutate { $0.markReturn() }
         dismissRestPanel()
     }
 
-    func pause() {
-        mutate { $0.pause() }
-    }
-
-    func resume() {
-        mutate { $0.resume() }
+    /// Locks the Mac; RestCycle updates only via session lock observers.
+    func lockScreen() {
+        SystemScreenLock.lock()
     }
 
     func stopTicker() {

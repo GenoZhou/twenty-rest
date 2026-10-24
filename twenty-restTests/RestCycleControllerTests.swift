@@ -5,9 +5,9 @@ import Testing
 @Suite("RestCycleController")
 @MainActor
 struct RestCycleControllerTests {
-    @Test("unlock that covers Rest minimum auto-Returns and dismisses the Rest panel")
-    func unlockAutoReturnDismissesPanel() {
-        let controller = makeController(suite: "RestCycleControllerTests.autoReturn")
+    @Test("unlock that covers Rest minimum Resets and dismisses the Rest panel")
+    func unlockResetDismissesPanel() {
+        let controller = makeController(suite: "RestCycleControllerTests.reset")
 
         controller.advanceTime(by: .seconds(60))
         #expect(controller.isInRest)
@@ -34,12 +34,24 @@ struct RestCycleControllerTests {
         #expect(controller.isRestPanelPresented)
     }
 
+    @Test("unlock from Work Interval covering Rest minimum Resets remaining")
+    func unlockFromWorkResets() {
+        let controller = makeController(suite: "RestCycleControllerTests.workReset")
+
+        controller.advanceTime(by: .seconds(10))
+        controller.beginSessionLockForTesting()
+        controller.applySessionUnlock(wallTimeElapsed: .seconds(20))
+
+        #expect(controller.phase == .workInterval)
+        #expect(controller.remaining == .seconds(60))
+        #expect(controller.isRestPanelPresented == false)
+    }
+
     private func makeController(suite: String) -> RestCycleController {
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
         defaults.set(60, forKey: "workIntervalSeconds")
         defaults.set(20, forKey: "restMinimumSeconds")
-        defaults.set(300, forKey: "snoozeSeconds")
         return RestCycleController(
             settings: RestCycleSettings(defaults: defaults),
             enablesRuntime: false

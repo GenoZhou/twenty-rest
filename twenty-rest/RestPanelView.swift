@@ -17,14 +17,11 @@ struct RestPanelView: View {
                 .frame(maxWidth: .infinity)
 
             HStack {
-                Button("跳过") {
-                    controller.skip()
-                }
-                Button("稍后（\(controller.snoozeMinutes) 分钟）") {
-                    controller.snooze()
+                Button("锁屏") {
+                    controller.lockScreen()
                 }
                 Spacer()
-                Button("回来了") {
+                Button("休息好了") {
                     controller.markReturn()
                 }
                 .buttonStyle(.borderedProminent)
@@ -41,8 +38,8 @@ struct RestPanelView: View {
 
     private var instructionText: String {
         if controller.canReturn {
-            return "最低休息时间已到。若还想多歇一会儿，关上面板即可；回到屏幕前再点「回来了」。"
+            return "最低休息时间已到。若还想多歇一会儿，关上面板即可；回到屏幕前再点「休息好了」。也可锁屏，够时长后会自动开下一段。"
         }
-        return "请向约 6 米外看一会儿。倒计时是最低休息时长；结束后点「回来了」再开始下一段。"
+        return "请向约 6 米外看一会儿，或点「锁屏」离开屏幕。倒计时是最低休息；结束后点「休息好了」再开始下一段。"
     }
 }

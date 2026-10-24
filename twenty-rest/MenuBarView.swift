@@ -8,13 +8,13 @@ struct MenuBarView: View {
 
     private static let workMinuteOptions = [10, 15, 20, 25, 30, 45, 60]
     private static let restSecondOptions = [15, 20, 30, 45, 60]
-    private static let snoozeMinuteOptions = [2, 5, 10, 15]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            actionSection
-
-            Divider()
+            if controller.isInRest {
+                actionSection
+                Divider()
+            }
 
             HStack(spacing: 8) {
                 Picker("用眼", selection: $controller.workIntervalMinutes) {
@@ -46,12 +46,6 @@ struct MenuBarView: View {
 
             Divider()
 
-            Picker("稍后提醒", selection: $controller.snoozeMinutes) {
-                ForEach(Self.snoozeMinuteOptions, id: \.self) { minutes in
-                    Text("稍后 \(minutes) 分钟").tag(minutes)
-                }
-            }
-
             Toggle("登录时打开", isOn: $launchAtLogin)
                 .onChange(of: launchAtLogin) { _, enabled in
                     do {
@@ -69,8 +63,6 @@ struct MenuBarView: View {
                     .foregroundStyle(.red)
             }
 
-            Divider()
-
             Button("退出 Twenty Rest") {
                 controller.stopTicker()
                 NSApplication.shared.terminate(nil)
@@ -86,19 +78,11 @@ struct MenuBarView: View {
 
     @ViewBuilder
     private var actionSection: some View {
-        if controller.isInRest {
-            Button("打开休息面板") {
-                controller.isRestPanelPresented = true
-            }
-            Button("跳过休息") { controller.skip() }
-            Button("稍后提醒") { controller.snooze() }
-            Button("回来了") { controller.markReturn() }
-                .disabled(!controller.canReturn)
-        } else if controller.isPaused {
-            Button("继续计时") { controller.resume() }
-        } else {
-            Button("暂停计时") { controller.pause() }
+        Button("打开休息面板") {
+            controller.isRestPanelPresented = true
         }
+        Button("休息好了") { controller.markReturn() }
+            .disabled(!controller.canReturn)
     }
 
     private func snapToPresetOptions() {
@@ -109,10 +93,6 @@ struct MenuBarView: View {
         controller.restMinimumSeconds = Self.nearest(
             controller.restMinimumSeconds,
             in: Self.restSecondOptions
-        )
-        controller.snoozeMinutes = Self.nearest(
-            controller.snoozeMinutes,
-            in: Self.snoozeMinuteOptions
         )
     }
 

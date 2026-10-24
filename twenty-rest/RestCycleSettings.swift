@@ -6,7 +6,6 @@ nonisolated struct RestCycleSettings {
     private enum Key {
         static let workIntervalSeconds = "workIntervalSeconds"
         static let restMinimumSeconds = "restMinimumSeconds"
-        static let snoozeSeconds = "snoozeSeconds"
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -23,16 +22,10 @@ nonisolated struct RestCycleSettings {
         set { defaults.set(max(1, newValue), forKey: Key.restMinimumSeconds) }
     }
 
-    var snoozeSeconds: Int {
-        get { intValue(for: Key.snoozeSeconds, default: 5 * 60) }
-        set { defaults.set(max(1, newValue), forKey: Key.snoozeSeconds) }
-    }
-
     var configuration: RestCycleConfiguration {
         RestCycleConfiguration(
             workInterval: .seconds(workIntervalSeconds),
-            restMinimum: .seconds(restMinimumSeconds),
-            snoozeDuration: .seconds(snoozeSeconds)
+            restMinimum: .seconds(restMinimumSeconds)
         )
     }
 

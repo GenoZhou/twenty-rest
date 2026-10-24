@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (amended)
+Superseded by [ADR 0007](0007-unified-lock-reset-and-simpler-rest-exits.md)
 
 ## Context
 
@@ -24,3 +24,7 @@ Requiring a manual Return after a long lock feels like busywork when the lock it
 - Lock-away longer than the remaining Rest minimum is a first-class “I rested by leaving” path.
 - Brief unlocks before the minimum still show the panel.
 - Work Interval lock/pause behavior is unchanged (ADR 0002).
+
+## Supersession note
+
+ADR 0007 replaces auto-Return with **Reset** when wall time ≥ the **configured** Rest minimum (any phase, not only Rest), drops Skip/Snooze from the short-unlock path, and keeps short Rest unlocks on the panel until Return.
