@@ -14,7 +14,7 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 
 ### Domain docs
 
-Single-context layout (`GLOSSARY.md` + `docs/adr/` at repo root). See `docs/agents/domain.md`.
+Single-context layout (`GLOSSARY.md` + `docs/adr/` at repo root). See `docs/agents/domain.md` (includes **new ADR numbering**).
 
 ### Review
 

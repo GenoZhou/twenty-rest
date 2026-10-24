@@ -10,6 +10,10 @@ How the engineering skills should consume this repo's domain documentation when 
 
 If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill (reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates them lazily when terms or decisions actually get resolved.
 
+## New ADR numbering
+
+Before creating an ADR, list `docs/adr/` (or the context's `docs/adr/`), take the highest `NNNN-…` prefix, and use **NNNN+1**. Never reuse a number, even for a different slug.
+
 ## File structure
 
 Single-context repo (most repos):
@@ -48,4 +52,4 @@ If the concept you need isn't in the glossary yet, that's a signal: either you'r
 
 If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
 
-> _Contradicts ADR-0007 (event-sourced orders), but worth reopening because…_
+> _Contradicts ADR-0007 (unified lock Reset), but worth reopening because…_
